@@ -87,6 +87,12 @@ export class TrpcRouter implements OnModuleInit {
         });
       }),
 
+    getYieldSimulations: this.trpc.procedure
+      .input(z.object({ balance: z.number() }))
+      .query(async ({ input }) => {
+        return await this.simulationService.simulateYieldOptimization(input.balance);
+      }),
+
     getDevnetBalance: this.trpc.procedure
       .input(z.object({ address: z.string() }))
       .query(async ({ input }) => {

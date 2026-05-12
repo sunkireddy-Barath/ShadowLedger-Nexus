@@ -45,4 +45,19 @@ export class SimulationService {
       probability: s.probability
     }));
   }
+
+  async simulateYieldOptimization(balance: number) {
+    const protocols = [
+      { name: 'Solend', baseApy: 0.04, risk: 'LOW' },
+      { name: 'Kamno', baseApy: 0.08, risk: 'MEDIUM' },
+      { name: 'Drift', baseApy: 0.12, risk: 'HIGH' }
+    ];
+
+    return protocols.map(p => ({
+      protocol: p.name,
+      apy: p.baseApy,
+      projectedAnnualYield: balance * p.baseApy,
+      riskScore: p.risk === 'HIGH' ? 85 : p.risk === 'MEDIUM' ? 45 : 15
+    }));
+  }
 }
