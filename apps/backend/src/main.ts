@@ -4,12 +4,16 @@ import { TrpcRouter } from './trpc/trpc.router';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { NexusLogger } from './common/logging/nexus.logger';
 import * as trpcExpress from '@trpc/server/adapters/express';
+import helmet from 'helmet';
+import * as compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: new NexusLogger(),
   });
   app.useGlobalFilters(new AllExceptionsFilter());
+  app.use(helmet());
+  app.use(compression());
   app.enableCors();
 
   const trpcRouter = app.get(TrpcRouter);
