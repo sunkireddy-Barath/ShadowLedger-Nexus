@@ -29,7 +29,8 @@ export function Copilot() {
 
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: response.orchestrationPlan 
+        content: response.orchestrationPlan,
+        agentActions: response.agentActions 
       }]);
     } catch (error) {
       setMessages(prev => [...prev, { 
@@ -60,15 +61,26 @@ export function Copilot() {
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+              {messages.map((m: any, i: number) => (
+                <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`max-w-[90%] p-3 rounded-2xl text-sm ${
                     m.role === 'user' 
                       ? 'bg-cyan-glow text-black font-medium' 
                       : 'bg-white/5 text-white/90 border border-white/5'
                   }`}>
                     {m.content}
                   </div>
+                  {m.agentActions && (
+                    <div className="mt-2 space-y-1 w-[90%]">
+                      {m.agentActions.map((action: any, idx: number) => (
+                        <div key={idx} className="bg-black/40 p-2 rounded-xl border border-white/5 flex items-center gap-2 text-[10px]">
+                          <div className={`w-1.5 h-1.5 rounded-full ${action.status === 'SUCCESS' ? 'bg-emerald-glow' : 'bg-amber-glow'}`} />
+                          <span className="font-bold text-muted-foreground uppercase">{action.agent}</span>
+                          <span className="text-white/60 truncate">{action.action}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

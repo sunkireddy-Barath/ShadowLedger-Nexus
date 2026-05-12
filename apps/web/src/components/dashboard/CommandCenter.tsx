@@ -20,6 +20,7 @@ import { trpc } from '@/lib/trpc';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 export function CommandCenter() {
+  const [isShielded, setIsShielded] = useState(true);
   const { publicKey } = useWallet();
   const { data, isLoading } = trpc.getOverview.useQuery({ orgId: 'default-org' });
   const { data: walletBalance } = trpc.getDevnetBalance.useQuery(
@@ -48,9 +49,14 @@ export function CommandCenter() {
           <p className="text-muted-foreground mt-1">Autonomous invisible operations are stable.</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-4 py-2 glass rounded-xl border-cyan-glow/20">
-            <div className="w-2 h-2 rounded-full bg-cyan-glow animate-pulse" />
-            <span className="text-xs font-mono text-cyan-glow">NETWORK: SOLANA MAINNET</span>
+          <div className={cn(
+            "flex items-center gap-3 px-4 py-2 rounded-xl border transition-all cursor-pointer",
+            isShielded ? "bg-cyan-glow/10 border-cyan-glow/30" : "bg-white/5 border-white/10"
+          )} onClick={() => setIsShielded(!isShielded)}>
+            <div className={cn("w-2 h-2 rounded-full", isShielded ? "bg-cyan-glow animate-pulse" : "bg-white/20")} />
+            <span className={cn("text-[10px] font-bold tracking-tighter", isShielded ? "text-cyan-glow" : "text-muted-foreground")}>
+              PRIVACY SHIELD: {isShielded ? "ACTIVE" : "INACTIVE"}
+            </span>
           </div>
           <button className="px-6 py-2 bg-cyan-glow text-black font-bold rounded-xl neo-glow-cyan hover:scale-105 transition-all">
             Connect Stealth Wallet
