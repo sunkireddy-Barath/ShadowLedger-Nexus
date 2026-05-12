@@ -29,7 +29,6 @@ function RouteLine({ start, end, color }: { start: [number, number, number], end
       dashed
       dashScale={5}
       dashSize={0.5}
-      dashGap={0.2}
     />
   );
 }

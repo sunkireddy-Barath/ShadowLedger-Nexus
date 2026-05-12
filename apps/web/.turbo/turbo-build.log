@@ -3,6 +3,70 @@
 > web@0.1.0 build
 > next build
 
-▲ Next.js 16.2.6 (Turbopack)
+   ▲ Next.js 15.5.18
 
-  Creating an optimized production build ...
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings in 7.1s
+
+../../node_modules/pino/lib/tools.js
+Module not found: Can't resolve 'pino-pretty' in '/home/barath/30c/ShadowLedger-Nexus/node_modules/pino/lib'
+
+Import trace for requested module:
+../../node_modules/pino/lib/tools.js
+../../node_modules/pino/pino.js
+../../node_modules/@walletconnect/logger/dist/index.es.js
+../../node_modules/@walletconnect/universal-provider/dist/index.es.js
+../../node_modules/@walletconnect/solana-adapter/dist/core.js
+../../node_modules/@walletconnect/solana-adapter/dist/adapter.js
+../../node_modules/@solana/wallet-adapter-walletconnect/lib/esm/index.js
+../../node_modules/@solana/wallet-adapter-wallets/lib/esm/index.js
+./src/components/Providers.tsx
+
+ ⚠ Compiled with warnings in 6.7s
+
+../../node_modules/ox/_esm/tempo/internal/virtualMasterPool.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+../../node_modules/ox/_esm/tempo/internal/virtualMasterPool.js
+../../node_modules/ox/_esm/tempo/VirtualMaster.js
+../../node_modules/ox/_esm/tempo/index.js
+../../node_modules/viem/_esm/tempo/chainConfig.js
+../../node_modules/viem/_esm/chains/definitions/tempo.js
+../../node_modules/viem/_esm/chains/index.js
+../../node_modules/@reown/appkit/dist/esm/src/networks/index.js
+../../node_modules/@reown/appkit/dist/esm/exports/networks.js
+../../node_modules/@walletconnect/solana-adapter/dist/core.js
+../../node_modules/@walletconnect/solana-adapter/dist/adapter.js
+../../node_modules/@solana/wallet-adapter-walletconnect/lib/esm/index.js
+../../node_modules/@solana/wallet-adapter-wallets/lib/esm/index.js
+./src/components/Providers.tsx
+
+ ✓ Compiled successfully in 14.0s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data     ✓ Collecting page data 
+ ✓ Generating static pages (5/5)
+   Collecting build traces     ✓ Collecting build traces 
+   Finalizing page optimization     ✓ Finalizing page optimization 
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    1.96 kB         147 kB
+├ ○ /_not-found                            995 B         103 kB
+├ ƒ /dashboard                            286 kB         471 kB
+├ ƒ /dashboard/agents                    3.12 kB         189 kB
+├ ƒ /dashboard/analytics                 2.87 kB         105 kB
+├ ƒ /dashboard/payroll                   2.68 kB         188 kB
+├ ƒ /dashboard/risk                      2.34 kB         188 kB
+├ ƒ /dashboard/simulations               3.09 kB         188 kB
+├ ƒ /dashboard/swaps                     2.32 kB         188 kB
+└ ƒ /dashboard/treasury                  3.27 kB         189 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/255-00abe0f88989e6bd.js         46 kB
+  ├ chunks/4bd1b696-382748cc942d8a14.js  54.2 kB
+  └ other shared chunks (total)          1.95 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

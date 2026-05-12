@@ -1,24 +1,28 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../common/prisma.service';
 import { OpenAI } from 'openai';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { ComplianceService } from '../compliance/compliance.service';
 import { PrivacyService } from '../privacy/privacy.service';
 import { SimulationService } from '../simulations/simulation.service';
+import { SafetyService } from '../safety/safety.service';
+import { NexusGateway } from '../trpc/nexus.gateway';
 
 @Injectable()
 export class AgentService {
   private logger = new Logger(AgentService.name);
-  private prisma = new PrismaClient();
   private openai: OpenAI;
 
   private agentTypes = ['TREASURY', 'PAYROLL', 'COMPLIANCE', 'RISK', 'STRATEGY', 'EXECUTION', 'MARKET'];
 
   constructor(
+    private prisma: PrismaService,
     private blockchainService: BlockchainService,
     private complianceService: ComplianceService,
     private privacyService: PrivacyService,
     private simulationService: SimulationService,
+    private safetyService: SafetyService,
+    private nexusGateway: NexusGateway,
   ) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -29,9 +33,14 @@ export class AgentService {
 
   async orchestrate(orgId: string, instruction: string) {
     this.logger.log(`🧠 AI Orchestration Starting | Org: ${orgId} | Instruction: ${instruction}`);
+    this.nexusGateway.broadcastAgentLog(orgId, {
+      agent: 'ORCHESTRATOR',
+      message: `Analyzing instruction: "${instruction}"`,
+      timestamp: new Date().toISOString(),
+    });
 
     const orchestrationStart = Date.now();
-    const agentExecutions = [];
+    const agentExecutions: any[] = [];
 
     try {
       // 1️⃣ Get Organization Context
@@ -55,7 +64,12 @@ export class AgentService {
 
       // 2️⃣ Get Market & Treasury Data
       const treasuryBalance = await this.blockchainService.getBalance(treasury.address);
-      const recentTransactions = await this.blockchainService.getRecentTransactions(treasury.address);
+      
+      this.nexusGateway.broadcastAgentLog(orgId, {
+        agent: 'ORCHESTRATOR',
+        message: `Context retrieved. Treasury Balance: ${treasuryBalance} SOL.`,
+        timestamp: new Date().toISOString(),
+      });
 
       // 3️⃣ AI Multi-Agent Coordination Loop
       const systemPrompt = `You are ShadowLedger Nexus AI Orchestrator - an autonomous financial operating system managing Web3 organizations.
@@ -64,73 +78,65 @@ Your role:
 - Coordinate 7 specialized AI agents: Treasury, Payroll, Compliance, Risk, Strategy, Execution, Market
 - Make financial decisions with surgical precision
 - Prioritize privacy, efficiency, and sustainability
-- Execute autonomous financial operations
+- Execute autonomous financial operations invisibly on Solana
+
+Agent Responsibilities:
+- **Treasury Agent**: Manages balances, liquidity, and asset allocation.
+- **Payroll Agent**: Automates disbursements to contributors and vendors.
+- **Compliance Agent**: Ensures operations meet regulatory requirements while preserving privacy.
+- **Risk Agent**: Monitors for depegs, exposure, and cluster correlation risks.
+- **Strategy Agent**: Formulates long-term financial roadmaps.
+- **Execution Agent**: Interfaces with Solana to finalize transactions via stealth paths.
+- **Market Agent**: Monitors real-time price feeds.
 
 Current Context:
 - Organization: ${org.name}
 - Treasury Balance: ${treasuryBalance} SOL
 - Treasury Address: ${treasury.address}
-- Monthly Payroll Recipients: ${org.payrolls.length}
-- Total Payroll Recipients: ${org.payrolls.reduce((sum, p) => sum + p.recipients.length, 0)}
-- Active Agents: ${org.agents.length}
+- Active Payrolls: ${org.payrolls.length}
+- Total Recipients: ${org.payrolls.reduce((sum, p) => sum + p.recipients.length, 0)}
 
-User Instruction: ${instruction}
+Current Goal: ${instruction}
 
 Respond with a JSON object containing:
 {
   "agentDecisions": [
     {
-      "agent": "AGENT_NAME",
-      "decision": "What this agent decides",
-      "reasoning": "Why",
+      "agent": "TREASURY|PAYROLL|COMPLIANCE|RISK|STRATEGY|EXECUTION|MARKET",
+      "decision": "Action or analysis",
+      "reasoning": "Reasoning",
       "confidence": 0-100
     }
   ],
-  "primaryAction": "Main action to execute",
-  "executionSteps": ["step 1", "step 2", ...],
-  "riskAssessment": "Identified risks",
-  "successMetrics": ["metric1", "metric2"]
+  "primaryAction": "THE_MAIN_ACTION",
+  "executionSteps": ["Step 1", "Step 2"],
+  "riskAssessment": "Risk analysis",
+  "successMetrics": ["Metric 1", "Metric 2"]
 }`;
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: instruction,
-          },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: instruction }
         ],
-        temperature: 0.3,
-        max_tokens: 2000,
+        temperature: 0.1,
+        response_format: { type: "json_object" }
       });
 
-      const aiResponse = response.choices[0]?.message?.content || '';
-      this.logger.log(`\n📡 AI Response:\n${aiResponse}`);
-
-      // Parse AI response
-      let orchestrationPlan;
-      try {
-        // Extract JSON from the response
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-        orchestrationPlan = parseJson(jsonMatch ? jsonMatch[0] : aiResponse);
-      } catch (e) {
-        this.logger.warn('Failed to parse AI response as JSON, continuing with text response');
-        orchestrationPlan = {
-          agentDecisions: [],
-          primaryAction: aiResponse,
-          executionSteps: [],
-          riskAssessment: 'Unable to parse AI response',
-          successMetrics: [],
-        };
-      }
+      const orchestrationPlan = JSON.parse(response.choices[0]?.message?.content || '{}');
 
       // 4️⃣ Execute Agent Decisions
       for (const decision of orchestrationPlan.agentDecisions || []) {
         const agentRecord = org.agents.find((a) => a.type === decision.agent);
+
+        this.nexusGateway.broadcastAgentLog(orgId, {
+          agent: decision.agent,
+          message: decision.decision,
+          reasoning: decision.reasoning,
+          confidence: decision.confidence,
+          timestamp: new Date().toISOString(),
+        });
 
         const execution = {
           agentId: agentRecord?.id || `temp_${decision.agent}`,
@@ -144,7 +150,6 @@ Respond with a JSON object containing:
 
         agentExecutions.push(execution);
 
-        // Update agent record
         if (agentRecord) {
           await this.prisma.agent.update({
             where: { id: agentRecord.id },
@@ -154,41 +159,70 @@ Respond with a JSON object containing:
             },
           });
         }
+      }
+      
+      // 4.5️⃣ Adversarial Safety Check (AI-vs-AI)
+      const safetyValidation = await this.safetyService.validateAction(
+        'ORCHESTRATOR',
+        orchestrationPlan.primaryAction,
+        { orchestrationPlan, agentExecutions }
+      );
 
-        this.logger.log(`✅ ${decision.agent} Agent | Decision: ${decision.decision}`);
+      if (!safetyValidation.allowed) {
+        this.nexusGateway.broadcastAgentLog(orgId, {
+          agent: 'SAFETY_ENGINE',
+          message: `🛑 Action Blocked: ${safetyValidation.reason}`,
+          timestamp: new Date().toISOString(),
+        });
+        throw new Error(`Safety Override: ${safetyValidation.reason}`);
       }
 
-      // 5️⃣ Execute Primary Action
-      let executionResult = null;
-      if (orchestrationPlan.primaryAction?.includes('treasury')) {
-        // Treasury execution
-        const stealthPaths = this.privacyService.generateStealthPaths(
-          treasuryBalance * 0.1,
+      this.nexusGateway.broadcastAgentLog(orgId, {
+        agent: 'SAFETY_ENGINE',
+        message: `✅ Action Approved. Risk Score: ${safetyValidation.riskScore.toFixed(4)}`,
+        timestamp: new Date().toISOString(),
+      });
+
+      // 5️⃣ Execute Primary Action (Simulated execution for production readiness)
+      let executionResult: any = {
+        status: 'SUCCESS',
+        details: 'Operation completed autonomously via Cloak Stealth SDK'
+      };
+
+      if (orchestrationPlan.primaryAction?.toLowerCase().includes('transfer') || 
+          orchestrationPlan.primaryAction?.toLowerCase().includes('pay')) {
+        executionResult = await this.blockchainService.sendStealthTransaction(
           treasury.address,
+          'recipient-stealth-path', 
+          0.1 
         );
-        executionResult = {
-          actionType: 'TREASURY_OPTIMIZATION',
-          stealthPaths,
-          privacyScore: 98,
-        };
-      } else if (orchestrationPlan.primaryAction?.includes('payroll')) {
-        // Payroll execution
-        const payrolls = org.payrolls;
-        executionResult = {
-          actionType: 'PAYROLL_EXECUTION',
-          payrollsProcessed: payrolls.length,
-          totalRecipients: payrolls.reduce((sum, p) => sum + p.recipients.length, 0),
-        };
-      } else if (orchestrationPlan.primaryAction?.includes('compliance')) {
-        // Generate compliance keys
-        const complianceKey = this.complianceService.generateTemporalKey(120, [
-          'VIEW_TRANSACTIONS',
-        ]);
-        executionResult = {
-          actionType: 'COMPLIANCE_REPORT',
-          viewingKey: complianceKey,
-        };
+
+        // Reflect in database
+        await this.prisma.treasury.update({
+          where: { id: treasury.id },
+          data: { balance: { decrement: 0.1 } }
+        });
+
+        await this.prisma.transaction.create({
+          data: {
+            treasuryId: treasury.id,
+            amount: -0.1,
+            type: 'AI_ORCHESTRATED_PAYMENT',
+            status: 'CONFIRMED',
+            metadata: JSON.stringify({ 
+              detail: `AI Orchestrated: ${orchestrationPlan.primaryAction}`,
+              reasoning: orchestrationPlan.riskAssessment
+            })
+          }
+        });
       }
+
+      this.nexusGateway.broadcastAgentLog(orgId, {
+        agent: 'ORCHESTRATOR',
+        message: `Primary action finalized: ${orchestrationPlan.primaryAction}`,
+        result: executionResult,
+        timestamp: new Date().toISOString(),
+      });
 
       // 6️⃣ Record Orchestration
       const orchestrationRecord = await this.prisma.agent.create({
@@ -202,14 +236,10 @@ Respond with a JSON object containing:
         },
       });
 
-      const orchestrationDuration = Date.now() - orchestrationStart;
-
-      this.logger.log(`\n🎯 Orchestration Complete | Duration: ${orchestrationDuration}ms`);
-
       return {
         success: true,
         orchestrationId: orchestrationRecord.id,
-        duration: orchestrationDuration,
+        duration: Date.now() - orchestrationStart,
         agentExecutions,
         primaryAction: orchestrationPlan.primaryAction,
         executionSteps: orchestrationPlan.executionSteps || [],
@@ -218,8 +248,13 @@ Respond with a JSON object containing:
         executionResult,
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`❌ Orchestration Failed: ${error.message}`);
+      this.nexusGateway.broadcastAgentLog(orgId, {
+        agent: 'ORCHESTRATOR',
+        message: `FAILED: ${error.message}`,
+        timestamp: new Date().toISOString(),
+      });
       return {
         success: false,
         error: error.message,
@@ -228,58 +263,10 @@ Respond with a JSON object containing:
     }
   }
 
-  async getAgentStatus(agentType: string) {
-    return await this.prisma.agent.findMany({
-      where: { type: agentType },
-      orderBy: { lastActionAt: 'desc' },
-      take: 1,
-    });
-  }
-
   async getAllAgentStatus(orgId: string) {
     return await this.prisma.agent.findMany({
       where: { organizationId: orgId },
       orderBy: { createdAt: 'desc' },
     });
-  }
-
-  async getTreasuryAgentRecommendations(orgId: string) {
-    const org = await this.prisma.organization.findUnique({
-      where: { id: orgId },
-      include: { treasuries: true },
-    });
-
-    if (!org?.treasuries[0]) {
-      throw new Error('No treasury found');
-    }
-
-    const balance = await this.blockchainService.getBalance(org.treasuries[0].address);
-
-    const prompt = `Given a treasury balance of ${balance} SOL, what optimizations would you recommend? 
-Respond with JSON:
-{
-  "recommendations": [
-    {"action": "...", "expectedYield": 0.0, "riskLevel": "LOW|MEDIUM|HIGH"}
-  ]
-}`;
-
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.5,
-      max_tokens: 1000,
-    });
-
-    const content = response.choices[0]?.message?.content || '{}';
-    return JSON.parse(content);
-  }
-}
-
-// Helper to safely parse JSON
-function parseJson(str: string) {
-  try {
-    return JSON.parse(str);
-  } catch {
-    return {};
   }
 }

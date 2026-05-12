@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState } from 'react';
 import { BarChart3, LineChart as LineChartIcon, TrendingUp, Filter } from 'lucide-react';
 

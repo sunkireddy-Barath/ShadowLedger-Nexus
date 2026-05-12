@@ -17,11 +17,12 @@ async function main() {
   });
 
   // 2. Create Treasury
+  const treasuryAddress = 'vines1vzrYbzduYv7BBSM3S98wZt3p7R3G8F55zZ6RL'; // Active Devnet address
   const treasury = await prisma.treasury.upsert({
-    where: { address: 'Stealth-Treasury-001' },
+    where: { address: treasuryAddress },
     update: {},
     create: {
-      address: 'Stealth-Treasury-001',
+      address: treasuryAddress,
       balance: 12402901.42,
       currency: 'SOL',
       isPrivate: true,
@@ -32,12 +33,15 @@ async function main() {
 
   // 3. Create Agents
   const agentTypes = [
-    'TREASURY', 'PAYROLL', 'COMPLIANCE', 'RISK', 'STRATEGY', 'EXECUTION', 'MARKET'
+    'TREASURY', 'PAYROLL', 'COMPLIANCE', 'RISK', 'STRATEGY', 'EXECUTION', 'MARKET', 'ORCHESTRATOR'
   ];
 
   for (const type of agentTypes) {
-    await prisma.agent.create({
-      data: {
+    await prisma.agent.upsert({
+      where: { id: `agent-${type.toLowerCase()}` },
+      update: {},
+      create: {
+        id: `agent-${type.toLowerCase()}`,
         name: `${type.charAt(0) + type.slice(1).toLowerCase()} AI`,
         type,
         status: 'IDLE',
@@ -60,7 +64,6 @@ async function main() {
     },
   });
 
-  // Individual creates for SQLite compatibility
   await prisma.recipient.create({
     data: { name: 'Lead Dev A', address: '0xStealth...1', payrollId: payroll.id }
   });

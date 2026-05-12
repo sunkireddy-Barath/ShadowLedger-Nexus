@@ -87,3 +87,14 @@ model Simulation {
   result    String?
   createdAt DateTime @default(now())
 }
+
+model SafetyAudit {
+  id          String   @id @default(cuid())
+  agentType   String
+  action      String
+  riskScore   Float
+  allowed     Boolean
+  reason      String?
+  metadata    String?
+  createdAt   DateTime @default(now())
+}

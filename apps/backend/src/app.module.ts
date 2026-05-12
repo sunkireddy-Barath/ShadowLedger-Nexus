@@ -9,14 +9,16 @@ import { ComplianceService } from './compliance/compliance.service';
 import { PrivacyService } from './privacy/privacy.service';
 import { SafetyService } from './safety/safety.service';
 import { BlockchainService } from './blockchain/blockchain.service';
+import { PrismaService } from './common/prisma.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
     TrpcModule,
   ],
   controllers: [AppController],
   providers: [
+    PrismaService,
     AppService, 
     AgentService, 
     SimulationService, 
