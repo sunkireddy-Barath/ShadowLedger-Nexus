@@ -1,33 +1,43 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class ComplianceService {
-  private activeKeys: Map<string, { expiresAt: Date, scope: string }> = new Map();
+  private activeKeys: Map<string, { expires: number; permissions: string[] }> = new Map();
 
-  generateViewingKey(durationHours: number, scope: string = 'TOTALS_ONLY') {
-    const key = `nexus_view_${uuidv4()}`;
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + durationHours);
-
-    this.activeKeys.set(key, { expiresAt, scope });
-
+  generateTemporalKey(durationMinutes: number = 60, permissions: string[] = ['VIEW_TRANSACTIONS']) {
+    const key = `nexus_view_${crypto.randomBytes(16).toString('hex')}`;
+    const expires = Date.now() + durationMinutes * 60 * 1000;
+    
+    this.activeKeys.set(key, { expires, permissions });
+    
     return {
       key,
-      expiresAt,
-      shareLink: `https://nexus.ledger/audit/${key}`,
+      expiresAt: new Date(expires).toISOString(),
+      permissions
     };
   }
 
   validateKey(key: string) {
-    const data = this.activeKeys.get(key);
-    if (!data) return false;
+    const session = this.activeKeys.get(key);
     
-    if (new Date() > data.expiresAt) {
+    if (!session) return { valid: false, reason: 'INVALID_KEY' };
+    if (Date.now() > session.expires) {
       this.activeKeys.delete(key);
-      return false;
+      return { valid: false, reason: 'KEY_EXPIRED' };
     }
 
-    return true;
+    return { valid: true, permissions: session.permissions };
+  }
+
+  scrambleAuditTrail(transactions: any[]) {
+    // Generate an audit-ready but privacy-preserving report
+    return transactions.map(tx => ({
+      id: `anon_${crypto.createHash('sha256').update(tx.id).digest('hex').slice(0, 8)}`,
+      amount: tx.amount,
+      type: tx.type,
+      timestamp: tx.createdAt
+    }));
   }
 }

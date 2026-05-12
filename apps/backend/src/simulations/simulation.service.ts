@@ -1,40 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class SimulationService {
-  private prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = new PrismaClient();
-  }
-
-  async runRunwaySimulation(orgId: string) {
-    const treasury = await this.prisma.treasury.findFirst({
-      where: { organizationId: orgId },
-    });
+  async runTreasuryStressTest(balance: number, outflow: number) {
+    // Advanced simulation logic
+    const months = 12;
+    const scenarios = ['BULL', 'BEAR', 'STAGNANT'];
     
-    if (!treasury) return { error: 'No treasury found' };
-
-    // Simple simulation logic for demonstration
-    const currentBalance = treasury.balance;
-    const monthlyBurn = 50000; // Mock burn rate
-    const runway = currentBalance / monthlyBurn;
+    const results = scenarios.map(scenario => {
+      const volatility = scenario === 'BEAR' ? 0.4 : scenario === 'BULL' ? 0.1 : 0.2;
+      const runway = balance / (outflow * (1 + volatility));
+      
+      return {
+        scenario,
+        runwayMonths: Math.floor(runway),
+        riskLevel: runway < 6 ? 'CRITICAL' : runway < 12 ? 'WARNING' : 'SAFE',
+        projection: Array.from({ length: months }).map((_, i) => ({
+          month: i + 1,
+          expectedBalance: balance - (outflow * (i + 1)) * (1 + (Math.random() * volatility - volatility/2))
+        }))
+      };
+    });
 
     return {
-      runwayMonths: runway.toFixed(2),
-      confidence: 0.95,
-      recommendation: runway < 6 ? 'Redistribute assets to low-risk stablecoins.' : 'Treasury health is optimal.',
+      timestamp: new Date().toISOString(),
+      baseBalance: balance,
+      monthlyOutflow: outflow,
+      scenarios: results
     };
   }
 
-  async runDepegSimulation(orgId: string, stablecoin: string) {
-    // Simulate a 20% depeg
-    return {
-      impact: 'HIGH',
-      estimatedLoss: '$1,240,000',
-      vulnerabilityScore: 84,
-      mitigationPlan: `Execute shielded swap from ${stablecoin} to native SOL.`,
-    };
+  async simulateStablecoinDepeg(asset: string, amount: number) {
+    const depegScenarios = [
+      { drop: 0.05, probability: 'MEDIUM' },
+      { drop: 0.15, probability: 'LOW' },
+      { drop: 0.50, probability: 'EXTREME' }
+    ];
+
+    return depegScenarios.map(s => ({
+      asset,
+      currentValue: amount,
+      projectedValue: amount * (1 - s.drop),
+      loss: amount * s.drop,
+      probability: s.probability
+    }));
   }
 }
