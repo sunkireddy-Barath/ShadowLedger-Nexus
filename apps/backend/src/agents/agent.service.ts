@@ -1,13 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OpenAI } from 'openai';
-import { PrismaClient, AgentType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { SafetyService } from '../safety/safety.service';
+import { NexusGateway } from '../trpc/nexus.gateway';
 
 @Injectable()
 export class AgentService {
   private openai: OpenAI;
   private prisma: PrismaClient;
+  private readonly logger = new Logger(AgentService.name);
 
-  constructor() {
+  constructor(
+    private readonly safetyService: SafetyService,
+    private readonly nexusGateway: NexusGateway,
+  ) {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -30,14 +36,25 @@ export class AgentService {
 
     const { agents, plan: planDesc } = JSON.parse(plan.choices[0].message.content || '{}');
 
-    // 2. Mock execution of agent tasks
+    // 2. Mock execution of agent tasks with safety checks
     const results = [];
     for (const agent of agents) {
-      results.push({
+      const safetyResult = await this.safetyService.validateAction(agent, planDesc, {});
+      
+      const status = safetyResult.allowed ? 'SUCCESS' : 'BLOCKED';
+      const detail = safetyResult.allowed 
+        ? `Executing ${agent} sub-task for: ${planDesc}`
+        : `Policy violation: ${safetyResult.reason}`;
+
+      const log = {
         agent,
-        action: `Executing ${agent} sub-task for: ${planDesc}`,
-        status: 'SUCCESS'
-      });
+        action: detail,
+        status,
+        timestamp: new Date().toISOString()
+      };
+
+      this.nexusGateway.broadcastAgentLog(orgId, log);
+      results.push(log);
     }
 
     return {
