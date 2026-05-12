@@ -64,7 +64,7 @@ export class AgentService {
     };
   }
 
-  async processTask(agentType: AgentType, task: string) {
+  async processTask(agentType: string, task: string) {
     const prompt = this.getPromptForAgent(agentType);
     
     const response = await this.openai.chat.completions.create({
@@ -76,7 +76,7 @@ export class AgentService {
     return JSON.parse(response.choices[0].message.content || '{}');
   }
 
-  private getPromptForAgent(type: AgentType): string {
+  private getPromptForAgent(type: string): string {
     const base = "You are an autonomous AI agent for ShadowLedger Nexus, a private financial OS on Solana.";
     
     switch (type) {

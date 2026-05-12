@@ -9,10 +9,12 @@ Build an invisible operational layer where organizations can execute financial a
 
 ## Key Features
 - **Autonomous Invisible Organization Layer**: Entire organizations run invisibly on-chain.
-- **Multi-Agent AI Intelligence**: 7 specialized agents (Treasury, Payroll, Compliance, Risk, Strategy, Execution, Market) collaborate to manage operations.
-- **Adaptive Financial Camouflage**: AI-driven transaction fragmentation and randomization to prevent forensic traceability.
+- **Multi-Agent AI Intelligence**: 7 specialized agents collaborating via an autonomous orchestrator.
+- **Adversarial Safety System**: AI-vs-AI policy enforcement and privacy scrubbing.
+- **Real-time Intelligence Feed**: Live agent operation logs via WebSockets.
+- **Adaptive Financial Camouflage**: AI-driven transaction fragmentation and randomization.
 - **Temporal Viewing Keys**: Time-bound, selective compliance for audit sessions.
-- **Predictive Treasury Simulations**: Stress-test treasury sustainability and stablecoin exposure.
+- **Predictive Treasury Simulations**: High-fidelity stress-tests and depeg risk models.
 
 ## Technology Stack
 - **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS v4, Framer Motion, Three.js.

@@ -55,6 +55,15 @@ export class TrpcRouter implements OnModuleInit {
         });
         return { treasury, agents };
       }),
+
+    getPayroll: this.trpc.procedure
+      .input(z.object({ orgId: z.string() }))
+      .query(async ({ input }) => {
+        return await this.prisma.payroll.findMany({
+          where: { organizationId: input.orgId },
+          include: { recipients: true }
+        });
+      }),
   });
 }
 
