@@ -1,10 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { TrpcRouter } from './trpc/trpc.router';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import * as trpcExpress from '@trpc/server/adapters/express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors();
 
   const trpcRouter = app.get(TrpcRouter);
