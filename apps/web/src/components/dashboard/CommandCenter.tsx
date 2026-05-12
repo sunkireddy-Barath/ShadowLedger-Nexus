@@ -11,14 +11,21 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Search,
-  Cpu
+  Cpu,
+  Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StealthRouteMap } from './StealthRouteMap';
 import { trpc } from '@/lib/trpc';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 export function CommandCenter() {
+  const { publicKey } = useWallet();
   const { data, isLoading } = trpc.getOverview.useQuery({ orgId: 'default-org' });
+  const { data: walletBalance } = trpc.getDevnetBalance.useQuery(
+    { address: publicKey?.toBase58() || '' },
+    { enabled: !!publicKey }
+  );
   
   const treasury = data?.treasury;
   const agents = data?.agents || [];
@@ -31,6 +38,8 @@ export function CommandCenter() {
       </div>
     );
   }
+
+  return (
     <div className="grid grid-cols-12 gap-6">
       {/* Top Header */}
       <div className="col-span-12 flex items-center justify-between mb-8">
@@ -54,7 +63,7 @@ export function CommandCenter() {
         <div className="grid grid-cols-3 gap-6">
           <StatCard 
             title="Total Shielded Treasury" 
-            value={treasury ? `$${treasury.balance.toLocaleString()}` : "$0"} 
+            value={publicKey ? `$${((walletBalance || 0) * 200).toLocaleString()}` : treasury ? `$${treasury.balance.toLocaleString()}` : "$0"} 
             change="+12.4%" 
             icon={Lock} 
             color="cyan" 

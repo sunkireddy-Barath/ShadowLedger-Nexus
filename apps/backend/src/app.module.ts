@@ -8,6 +8,7 @@ import { SimulationService } from './simulations/simulation.service';
 import { ComplianceService } from './compliance/compliance.service';
 import { PrivacyService } from './privacy/privacy.service';
 import { SafetyService } from './safety/safety.service';
+import { BlockchainService } from './blockchain/blockchain.service';
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { SafetyService } from './safety/safety.service';
     SimulationService, 
     ComplianceService,
     PrivacyService,
-    SafetyService
+    SafetyService,
+    BlockchainService
   ],
 })
 export class AppModule {}

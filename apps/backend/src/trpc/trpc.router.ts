@@ -3,6 +3,7 @@ import { TrpcService } from './trpc.service';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { AgentService } from '../agents/agent.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Injectable()
 export class TrpcRouter implements OnModuleInit {
@@ -10,6 +11,7 @@ export class TrpcRouter implements OnModuleInit {
   constructor(
     private readonly trpc: TrpcService,
     private readonly agentService: AgentService,
+    private readonly blockchainService: BlockchainService,
   ) {
     this.prisma = new PrismaClient();
   }
@@ -63,6 +65,12 @@ export class TrpcRouter implements OnModuleInit {
           where: { organizationId: input.orgId },
           include: { recipients: true }
         });
+      }),
+
+    getDevnetBalance: this.trpc.procedure
+      .input(z.object({ address: z.string() }))
+      .query(async ({ input }) => {
+        return await this.blockchainService.getBalance(input.address);
       }),
   });
 }

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -62,10 +63,13 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto pt-8 border-t border-white/5 w-full px-4">
-        <button className="flex items-center gap-4 p-3 rounded-xl text-muted-foreground hover:bg-white/5 hover:text-white transition-all w-full group-hover:px-4">
+        <button className="flex items-center gap-4 p-3 rounded-xl text-muted-foreground hover:bg-white/5 hover:text-white transition-all w-full group-hover:px-4 mb-4">
           <Settings size={24} className="shrink-0" />
           <span className="hidden group-hover:block text-sm font-medium">Settings</span>
         </button>
+        <div className="hidden group-hover:block">
+          <WalletMultiButton className="!bg-cyan-glow !text-black !font-bold !rounded-xl !w-full !justify-center !h-12 !transition-all hover:!scale-[1.02] !text-sm" />
+        </div>
       </div>
     </aside>
   );
