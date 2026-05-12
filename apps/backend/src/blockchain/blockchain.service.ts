@@ -7,9 +7,10 @@ export class BlockchainService implements OnModuleInit {
   private readonly logger = new Logger(BlockchainService.name);
 
   onModuleInit() {
-    // Connect to Solana Devnet
-    this.connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
-    this.logger.log('Connected to Solana Devnet');
+    // Connect to Solana Devnet (or custom RPC)
+    const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+    this.connection = new Connection(rpcUrl, 'confirmed');
+    this.logger.log(`Connected to Solana: ${rpcUrl}`);
   }
 
   async getBalance(address: string): Promise<number> {
