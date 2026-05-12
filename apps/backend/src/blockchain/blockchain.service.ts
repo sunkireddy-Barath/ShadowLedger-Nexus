@@ -27,7 +27,22 @@ export class BlockchainService implements OnModuleInit {
     try {
       const pubkey = new PublicKey(address);
       const signatures = await this.connection.getSignaturesForAddress(pubkey, { limit: 10 });
-      return signatures;
+      
+      const txs = await Promise.all(
+        signatures.map(async (s) => {
+          const tx = await this.connection.getParsedTransaction(s.signature, { 
+            maxSupportedTransactionVersion: 0 
+          });
+          return {
+            signature: s.signature,
+            timestamp: s.blockTime ? new Date(s.blockTime * 1000).toISOString() : null,
+            success: !tx?.meta?.err,
+            amount: (tx?.meta?.postBalances[0] || 0) - (tx?.meta?.preBalances[0] || 0),
+            detail: 'On-chain Op'
+          };
+        })
+      );
+      return txs;
     } catch (error) {
       this.logger.error(`Error fetching transactions for ${address}: ${error.message}`);
       return [];

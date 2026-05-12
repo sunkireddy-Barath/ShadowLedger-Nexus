@@ -99,19 +99,32 @@ export function CommandCenter() {
           </div>
           
           <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-            {transactions.map((tx: any, i: number) => {
-              const meta = JSON.parse(tx.metadata || '{}');
-              return (
+            {treasury?.onChainTxs && treasury.onChainTxs.length > 0 ? (
+              treasury.onChainTxs.map((tx: any, idx: number) => (
                 <OperationItem 
-                  key={tx.id}
-                  agent={i % 2 === 0 ? "Execution AI" : "Risk AI"} 
-                  action={tx.type} 
-                  status={tx.status} 
-                  time="Recently" 
-                  detail={meta.detail || tx.type}
+                  key={idx}
+                  agent="Execution AI" 
+                  action="ON-CHAIN OP" 
+                  status={tx.success ? "CONFIRMED" : "FAILED"} 
+                  time={tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString() : 'RECENT'} 
+                  detail={`Signature: ${tx.signature.slice(0, 8)}...${tx.signature.slice(-8)} | Amount: ${(tx.amount / 1e9).toFixed(4)} SOL`}
                 />
-              );
-            })}
+              ))
+            ) : (
+              transactions.map((tx: any, i: number) => {
+                const meta = JSON.parse(tx.metadata || '{}');
+                return (
+                  <OperationItem 
+                    key={tx.id}
+                    agent={i % 2 === 0 ? "Execution AI" : "Risk AI"} 
+                    action={tx.type} 
+                    status={tx.status} 
+                    time="Recently" 
+                    detail={meta.detail || tx.type}
+                  />
+                );
+              })
+            )}
             {transactions.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full opacity-30">
                 <Activity size={48} className="mb-2" />
@@ -144,11 +157,11 @@ export function CommandCenter() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Treasury Runway</p>
-                <p className="text-xl font-bold font-mono">18.4 Mo</p>
+                <p className="text-xl font-bold font-mono">{treasury?.runway || '0'} Mo</p>
               </div>
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Stealth Efficiency</p>
-                <p className="text-xl font-bold font-mono">99.2%</p>
+                <p className="text-xl font-bold font-mono">{treasury?.efficiency || '0'}%</p>
               </div>
             </div>
 

@@ -101,20 +101,34 @@ export default function TreasuryPage() {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {transactions.map((tx: any) => {
-                  const meta = JSON.parse(tx.metadata || '{}');
-                  return (
+                {treasury?.onChainTxs && treasury.onChainTxs.length > 0 ? (
+                  treasury.onChainTxs.map((tx: any, idx: number) => (
                     <TransactionRow 
-                      key={tx.id}
-                      type={tx.type} 
+                      key={idx}
+                      type="ON-CHAIN" 
                       asset={treasury?.currency || 'SOL'} 
-                      amount={tx.amount > 0 ? `+${tx.amount}` : tx.amount.toString()} 
-                      status={tx.status} 
-                      time="Recently" 
-                      detail={meta.detail || tx.type}
+                      amount={(tx.amount / 1e9).toFixed(4)} 
+                      status={tx.success ? "CONFIRMED" : "FAILED"} 
+                      time={tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString() : 'RECENT'} 
+                      detail={`Sig: ${tx.signature.slice(0, 8)}...`}
                     />
-                  );
-                })}
+                  ))
+                ) : (
+                  transactions.map((tx: any) => {
+                    const meta = JSON.parse(tx.metadata || '{}');
+                    return (
+                      <TransactionRow 
+                        key={tx.id}
+                        type={tx.type} 
+                        asset={treasury?.currency || 'SOL'} 
+                        amount={tx.amount > 0 ? `+${tx.amount}` : tx.amount.toString()} 
+                        status={tx.status} 
+                        time="Recently" 
+                        detail={meta.detail || tx.type}
+                      />
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
