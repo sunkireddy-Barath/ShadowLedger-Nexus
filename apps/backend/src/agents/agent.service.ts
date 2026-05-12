@@ -55,6 +55,16 @@ export class AgentService {
 
       this.nexusGateway.broadcastAgentLog(orgId, log);
       results.push(log);
+
+      // Persist to DB
+      await this.prisma.agent.updateMany({
+        where: { organizationId: orgId, type: agent },
+        data: {
+          lastAction: detail,
+          lastActionAt: new Date(),
+          status: 'ACTIVE'
+        }
+      });
     }
 
     return {

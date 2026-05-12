@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class SimulationService {
+  private prisma = new PrismaClient();
+
   async runTreasuryStressTest(balance: number, outflow: number) {
     // Advanced simulation logic
     const months = 12;
@@ -22,12 +25,23 @@ export class SimulationService {
       };
     });
 
-    return {
+    const res = {
       timestamp: new Date().toISOString(),
       baseBalance: balance,
       monthlyOutflow: outflow,
       scenarios: results
     };
+
+    await this.prisma.simulation.create({
+      data: {
+        name: 'Treasury Stress Test',
+        type: 'STRESS_TEST',
+        input: JSON.stringify({ balance, outflow }),
+        result: JSON.stringify(res)
+      }
+    });
+
+    return res;
   }
 
   async simulateStablecoinDepeg(asset: string, amount: number) {
