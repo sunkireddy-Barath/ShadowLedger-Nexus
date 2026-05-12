@@ -8,6 +8,11 @@ import helmet from 'helmet';
 import * as compression from 'compression';
 
 async function bootstrap() {
+  if (!process.env.OPENAI_API_KEY) {
+    console.error('❌ FATAL: OPENAI_API_KEY is not defined. AI orchestration will fail.');
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule, {
     logger: new NexusLogger(),
   });
