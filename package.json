@@ -12,6 +12,7 @@
   "devDependencies": {
     "@inquirer/prompts": "^8.4.3",
     "ajv": "^8.20.0",
+    "napi-postinstall": "^0.3.4",
     "prettier": "^3.2.5",
     "turbo": "latest"
   },
